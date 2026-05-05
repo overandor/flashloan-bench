@@ -15,7 +15,13 @@ This repository contains two main components:
 
 **Documentation:** See [bridge/README.md](bridge/README.md) for architecture, deployment, and usage.
 
-**⚠️ Security Note:** The bridge is currently in prototype phase. Critical hardening (tests, CI, real event decoding) is in progress on the `harden-bridge-ci` branch. Do not use with real value until tests pass and audit is complete.
+**Additional Docs:**
+- [Security Model](docs/SECURITY_MODEL.md) - Trust assumptions and security properties
+- [Threat Model](docs/THREAT_MODEL.md) - Attack vectors and mitigations
+- [Testnet Deployment Guide](docs/TESTNET_DEMO.md) - How to deploy to testnet
+- [Benchmark Dashboard](docs/BENCHMARK_DASHBOARD.md) - Metrics and visualization plan
+
+**⚠️ Security Note:** The bridge is currently in prototype phase. Do not use with real value until tests pass and audit is complete.
 
 ## Flash-Loan Benchmark Kit
 
