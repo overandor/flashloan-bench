@@ -22,7 +22,8 @@ This repository contains two main components:
 **Additional Docs:**
 - [Security Model](docs/SECURITY_MODEL.md) - Trust assumptions and security properties
 - [Threat Model](docs/THREAT_MODEL.md) - Attack vectors and mitigations
-- [Testnet Deployment Guide](docs/TESTNET_DEMO.md) - How to deploy to testnet
+- [Testnet Setup Guide](docs/TESTNET_SETUP.md) - Required environment variables and deployment order
+- [Testnet Deployment Guide](docs/TESTNET_DEMO.md) - Deployment proof checklist and explorer-link placeholders
 - [Benchmark Dashboard](dashboard/) - Real-time status dashboard (Streamlit)
 - [Benchmark Dashboard Plan](docs/BENCHMARK_DASHBOARD.md) - Metrics and visualization plan
 
