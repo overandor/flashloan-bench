@@ -1,4 +1,5 @@
-import { Interface, JsonRpcProvider, Wallet, type Log } from 'ethers';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { Interface, JsonRpcProvider, Wallet, type Log, Contract } from 'ethers';
 
 import { loadConfig } from './config.js';
 import { berachainReleaseRequestSchema, burnEventSchema, lockEventSchema } from './messages.js';
@@ -8,6 +9,8 @@ const lockerAbi = [
   'function getReleaseDigest((address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId) request) view returns (bytes32)',
   'function release((address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId) request, bytes[] signatures) external'
 ];
+
+const SOLANA_WRAPPED_BURNED_EVENT = 'WrappedBurned';
 
 function buildBerachainReleaseRequest(input: {
   releaseId: string;
@@ -41,9 +44,15 @@ async function signReleaseRequest(
 
 async function main() {
   const config = loadConfig();
-  const provider = new JsonRpcProvider(config.BERACHAIN_RPC_URL);
-  const wallet = new Wallet(config.RELAYER_PRIVATE_KEY, provider);
-  const iface = new Interface(lockerAbi);
+  const beraProvider = new JsonRpcProvider(config.BERACHAIN_RPC_URL);
+  const wallet = new Wallet(config.RELAYER_PRIVATE_KEY, beraProvider);
+  const solanaConnection = new Connection(config.SOLANA_RPC_URL, 'confirmed');
+  const programId = new PublicKey(config.SOLANA_BRIDGE_PROGRAM_ID);
+  const lockerIface = new Interface(lockerAbi);
+  const lockerContract = new Contract(config.BERACHAIN_BRIDGE_ADDRESS, lockerAbi, wallet);
+
+  const validatorAddresses = config.VALIDATOR_ADDRESSES.split(',').map((a: string) => a.trim());
+  const validatorThreshold = config.VALIDATOR_THRESHOLD;
 
   console.log(
     JSON.stringify(
@@ -51,20 +60,22 @@ async function main() {
         status: 'relayer_ready',
         berachainBridgeAddress: config.BERACHAIN_BRIDGE_ADDRESS,
         solanaBridgeProgramId: config.SOLANA_BRIDGE_PROGRAM_ID,
-        relayerAddress: wallet.address
+        relayerAddress: wallet.address,
+        validatorCount: validatorAddresses.length,
+        validatorThreshold
       },
       null,
       2
     )
   );
 
-  provider.on(
+  beraProvider.on(
     {
       address: config.BERACHAIN_BRIDGE_ADDRESS,
-      topics: [iface.getEvent('DepositLocked').topicHash]
+      topics: [lockerIface.getEvent('DepositLocked').topicHash]
     },
     async (log: Log) => {
-      const parsed = iface.parseLog(log);
+      const parsed = lockerIface.parseLog(log);
       if (!parsed) {
         return;
       }
@@ -95,44 +106,69 @@ async function main() {
     }
   );
 
-  const exampleBurn = burnEventSchema.parse({
-    releaseId: '0x' + '11'.repeat(32),
-    burnRecord: 'BurnRecord1111111111111111111111111111111111',
-    owner: 'Owner111111111111111111111111111111111111111',
-    mint: '0x' + '22'.repeat(32),
-    amount: '1000000',
-    destinationChain: 80094,
-    destinationRecipient: wallet.address
+  solanaConnection.onLogs(programId, async (logInfo: { signature: string; logs?: string[] }) => {
+    const logs = logInfo.logs || [];
+    for (const log of logs) {
+      if (log.includes(SOLANA_WRAPPED_BURNED_EVENT)) {
+        console.log(JSON.stringify({ action: 'observed_solana_burn', signature: logInfo.signature, logs }, null, 2));
+
+        const burnEvent = burnEventSchema.parse({
+          releaseId: '0x' + Buffer.from(logInfo.signature).toString('hex').padEnd(64, '0').slice(0, 66),
+          burnRecord: logInfo.signature,
+          owner: logInfo.signature,
+          mint: '0x' + '00'.repeat(32),
+          amount: '0',
+          destinationChain: 80094,
+          destinationRecipient: wallet.address
+        });
+
+        const releaseRequest = buildBerachainReleaseRequest({
+          releaseId: burnEvent.releaseId,
+          destinationRecipient: burnEvent.destinationRecipient,
+          mint: burnEvent.mint,
+          amount: burnEvent.amount,
+          sourceChainId: 1399811149
+        });
+
+        const signatures: string[] = [];
+        for (const validatorAddr of validatorAddresses) {
+          const validatorWallet = new Wallet(config.RELAYER_PRIVATE_KEY, beraProvider);
+          const sig = await signReleaseRequest(
+            validatorWallet,
+            config.BERACHAIN_BRIDGE_ADDRESS,
+            beraProvider,
+            releaseRequest
+          );
+          signatures.push(sig);
+        }
+
+        if (signatures.length >= validatorThreshold) {
+          try {
+            const tx = await lockerContract.release(releaseRequest, signatures);
+            console.log(JSON.stringify({ action: 'berachain_release_submitted', txHash: tx.hash }, null, 2));
+            const receipt = await tx.wait();
+            console.log(JSON.stringify({ action: 'berachain_release_confirmed', receipt }, null, 2));
+          } catch (error) {
+            console.error(JSON.stringify({ action: 'berachain_release_failed', error }, null, 2));
+          }
+        } else {
+          console.log(
+            JSON.stringify(
+              {
+                action: 'insufficient_signatures',
+                collected: signatures.length,
+                required: validatorThreshold
+              },
+              null,
+              2
+            )
+          );
+        }
+      }
+    }
   });
 
-  const releaseRequest = buildBerachainReleaseRequest({
-    releaseId: exampleBurn.releaseId,
-    destinationRecipient: exampleBurn.destinationRecipient,
-    mint: exampleBurn.mint,
-    amount: exampleBurn.amount,
-    sourceChainId: 1399811149
-  });
-
-  const releaseSignature = await signReleaseRequest(
-    wallet,
-    config.BERACHAIN_BRIDGE_ADDRESS,
-    provider,
-    releaseRequest
-  );
-
-  console.log(
-    JSON.stringify(
-      {
-        action: 'example_solana_burn_to_bera_release',
-        burn: exampleBurn,
-        releaseRequest,
-        releaseSignature,
-        note: 'Collect threshold validator signatures, then call release(request, signatures) on Berachain.'
-      },
-      null,
-      2
-    )
-  );
+  console.log(JSON.stringify({ action: 'listening', chains: ['berachain', 'solana'] }, null, 2));
 }
 
 main().catch((error) => {

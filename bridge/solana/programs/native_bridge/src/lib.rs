@@ -8,23 +8,27 @@ declare_id!("Br1dgE1111111111111111111111111111111111111");
 pub mod native_bridge {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, validator: Pubkey) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>, validators: Vec<Pubkey>, validator_threshold: u64) -> Result<()> {
         let state = &mut ctx.accounts.state;
         state.authority = ctx.accounts.authority.key();
-        state.validator = validator;
+        state.validators = validators;
+        require!(validator_threshold > 0 && validator_threshold <= validators.len() as u64, BridgeError::InvalidThreshold);
+        state.validator_threshold = validator_threshold;
         Ok(())
     }
 
-    pub fn set_validator(ctx: Context<SetValidator>, validator: Pubkey) -> Result<()> {
+    pub fn set_validators(ctx: Context<SetValidators>, validators: Vec<Pubkey>, validator_threshold: u64) -> Result<()> {
         let state = &mut ctx.accounts.state;
         require_keys_eq!(ctx.accounts.authority.key(), state.authority, BridgeError::Unauthorized);
-        state.validator = validator;
+        require!(validator_threshold > 0 && validator_threshold <= validators.len() as u64, BridgeError::InvalidThreshold);
+        state.validators = validators;
+        state.validator_threshold = validator_threshold;
         Ok(())
     }
 
     pub fn mint_wrapped(ctx: Context<MintWrapped>, transfer_id: [u8; 32], amount: u64, source_chain: u64) -> Result<()> {
         let state = &ctx.accounts.state;
-        require_keys_eq!(ctx.accounts.validator.key(), state.validator, BridgeError::Unauthorized);
+        require!(state.validators.contains(&ctx.accounts.validator.key()), BridgeError::Unauthorized);
 
         let mint_record = &mut ctx.accounts.mint_record;
         mint_record.transfer_id = transfer_id;
@@ -100,7 +104,8 @@ pub mod native_bridge {
 #[account]
 pub struct BridgeState {
     pub authority: Pubkey,
-    pub validator: Pubkey,
+    pub validator_threshold: u64,
+    pub validators: Vec<Pubkey>,
 }
 
 #[account]
@@ -127,13 +132,13 @@ pub struct BurnRecord {
 pub struct Initialize<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
-    #[account(init, payer = authority, space = 8 + size_of::<BridgeState>(), seeds = [b"state"], bump)]
+    #[account(init, payer = authority, space = 8 + 32 + 8 + 4 + 32 * 32, seeds = [b"state"], bump)]
     pub state: Account<'info, BridgeState>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-pub struct SetValidator<'info> {
+pub struct SetValidators<'info> {
     pub authority: Signer<'info>,
     #[account(mut, seeds = [b"state"], bump)]
     pub state: Account<'info, BridgeState>,
@@ -198,4 +203,6 @@ pub struct WrappedBurned {
 pub enum BridgeError {
     #[msg("Unauthorized")]
     Unauthorized,
+    #[msg("Invalid threshold")]
+    InvalidThreshold,
 }

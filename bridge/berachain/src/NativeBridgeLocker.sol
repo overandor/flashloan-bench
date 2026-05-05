@@ -1,11 +1,16 @@
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
     function transfer(address to, uint256 amount) external returns (bool);
 }
 
-contract NativeBridgeLocker {
+contract NativeBridgeLocker is Ownable {
+    using SafeERC20 for IERC20;
+
     bytes32 public constant RELEASE_TYPEHASH = keccak256(
         "ReleaseRequest(address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId)"
     );
@@ -27,7 +32,6 @@ contract NativeBridgeLocker {
         uint64 sourceChainId;
     }
 
-    address public owner;
     uint256 public validatorThreshold;
     mapping(address => bool) public validators;
     mapping(bytes32 => bool) public lockedTransfers;
@@ -49,13 +53,7 @@ contract NativeBridgeLocker {
     );
     event FundsReleased(bytes32 indexed transferId, address indexed recipient, address indexed token, uint256 amount);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "owner_only");
-        _;
-    }
-
-    constructor(address[] memory initialValidators, uint256 initialThreshold) {
-        owner = msg.sender;
+    constructor(address[] memory initialValidators, uint256 initialThreshold) Ownable(msg.sender) {
         for (uint256 i = 0; i < initialValidators.length; i++) {
             validators[initialValidators[i]] = true;
             emit ValidatorUpdated(initialValidators[i], true);
@@ -109,7 +107,7 @@ contract NativeBridgeLocker {
         );
         require(!lockedTransfers[transferId], "transfer_exists");
         lockedTransfers[transferId] = true;
-        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "lock_failed");
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         emit DepositLocked(
             transferId,
             intent.depositor,
@@ -141,7 +139,7 @@ contract NativeBridgeLocker {
 
         require(validSignatures >= validatorThreshold, "threshold_not_met");
         releasedTransfers[request.transferId] = true;
-        require(IERC20(token).transfer(request.recipient, request.amount), "release_failed");
+        IERC20(token).safeTransfer(request.recipient, request.amount);
         emit FundsReleased(request.transferId, request.recipient, token, request.amount);
     }
 

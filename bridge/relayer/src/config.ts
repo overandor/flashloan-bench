@@ -5,7 +5,9 @@ const configSchema = z.object({
   BERACHAIN_BRIDGE_ADDRESS: z.string().min(1),
   RELAYER_PRIVATE_KEY: z.string().min(1),
   SOLANA_RPC_URL: z.string().url(),
-  SOLANA_BRIDGE_PROGRAM_ID: z.string().min(1)
+  SOLANA_BRIDGE_PROGRAM_ID: z.string().min(1),
+  VALIDATOR_ADDRESSES: z.string().min(1),
+  VALIDATOR_THRESHOLD: z.string().transform(Number)
 });
 
 export type RelayerConfig = z.infer<typeof configSchema>;

@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@solana/web3.js": "^1.95.3",
     "ethers": "^6.13.4",
     "zod": "^3.23.8"
   },
