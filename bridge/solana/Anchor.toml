@@ -5,6 +5,9 @@ skip-lint = false
 [programs.localnet]
 native_bridge = "Br1dgE1111111111111111111111111111111111111"
 
+[programs.devnet]
+native_bridge = "Br1dgE1111111111111111111111111111111111111"
+
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "~/.config/solana/id.json"
