@@ -7,11 +7,17 @@ dist/
 build/
 target/
 .next/
+.cache/
+coverage/
 
 # Environment
 .env
 .env.local
 .env.*.local
+
+# Secrets
+*.key
+*.secret
 
 # IDE
 .vscode/
@@ -26,13 +32,22 @@ target/
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Foundry
 lib/
 cache/
+
+# Local Foundry binaries/cache
+tools/foundry/bin/
+tools/foundry/cache/
+tools/foundry/out/
 
 # Solana
 .anchor/
 
 # Bridge data
 .data/
+
+# Local/generated artifacts
+.tmp/
