@@ -76,10 +76,15 @@ async function main() {
     )
   );
 
+  const depositLockedEvent = lockerIface.getEvent('DepositLocked');
+  if (!depositLockedEvent) {
+    throw new Error('DepositLocked event not found in contract interface');
+  }
+
   beraProvider.on(
     {
       address: config.BERACHAIN_BRIDGE_ADDRESS,
-      topics: [lockerIface.getEvent('DepositLocked').topicHash]
+      topics: [depositLockedEvent.topicHash]
     },
     async (log: Log) => {
       const parsed = lockerIface.parseLog(log);
