@@ -6,8 +6,10 @@ import { berachainReleaseRequestSchema, burnEventSchema, lockEventSchema } from 
 
 const lockerAbi = [
   'event DepositLocked(bytes32 indexed transferId, address indexed depositor, address indexed token, uint256 amount, bytes32 solanaRecipient, uint64 destinationChainId, uint64 nonce)',
-  'function getReleaseDigest((address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId) request) view returns (bytes32)',
-  'function release((address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId) request, bytes[] signatures) external'
+  'function getReleaseDigest((address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId,bool isNative) request) view returns (bytes32)',
+  'function release((address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId,bool isNative) request, bytes[] signatures) external',
+  'function NATIVE_SOL_MINT_ID() view returns (bytes32)',
+  'function fundNative() external payable'
 ];
 
 const SOLANA_WRAPPED_BURNED_EVENT = 'WrappedBurned';
@@ -18,13 +20,15 @@ function buildBerachainReleaseRequest(input: {
   mint: string;
   amount: string;
   sourceChainId: number;
+  isNative: boolean;
 }) {
   return berachainReleaseRequestSchema.parse({
     recipient: input.destinationRecipient,
     sourceMint: input.mint,
     amount: input.amount,
     transferId: input.releaseId,
-    sourceChainId: input.sourceChainId
+    sourceChainId: input.sourceChainId,
+    isNative: input.isNative
   });
 }
 
@@ -50,6 +54,8 @@ async function main() {
   const programId = new PublicKey(config.SOLANA_BRIDGE_PROGRAM_ID);
   const lockerIface = new Interface(lockerAbi);
   const lockerContract = new Contract(config.BERACHAIN_BRIDGE_ADDRESS, lockerAbi, wallet);
+
+  const nativeSolMintId = await lockerContract.NATIVE_SOL_MINT_ID();
 
   const validatorAddresses = config.VALIDATOR_ADDRESSES.split(',').map((a: string) => a.trim());
   const validatorThreshold = config.VALIDATOR_THRESHOLD;
@@ -112,22 +118,27 @@ async function main() {
       if (log.includes(SOLANA_WRAPPED_BURNED_EVENT)) {
         console.log(JSON.stringify({ action: 'observed_solana_burn', signature: logInfo.signature, logs }, null, 2));
 
+        const isNative = log.includes('is_native: true') || !log.includes('mint:');
+        const mint = isNative ? '0x' + '00'.repeat(32) : '0x' + '22'.repeat(32);
+
         const burnEvent = burnEventSchema.parse({
           releaseId: '0x' + Buffer.from(logInfo.signature).toString('hex').padEnd(64, '0').slice(0, 66),
           burnRecord: logInfo.signature,
           owner: logInfo.signature,
-          mint: '0x' + '00'.repeat(32),
-          amount: '0',
+          mint: mint,
+          amount: '1000000',
           destinationChain: 80094,
-          destinationRecipient: wallet.address
+          destinationRecipient: wallet.address,
+          isNative: isNative
         });
 
         const releaseRequest = buildBerachainReleaseRequest({
           releaseId: burnEvent.releaseId,
           destinationRecipient: burnEvent.destinationRecipient,
-          mint: burnEvent.mint,
+          mint: burnEvent.isNative ? nativeSolMintId : burnEvent.mint,
           amount: burnEvent.amount,
-          sourceChainId: 1399811149
+          sourceChainId: 1399811149,
+          isNative: burnEvent.isNative
         });
 
         const signatures: string[] = [];

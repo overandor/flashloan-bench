@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Mint, MintTo, Token, TokenAccount};
+use anchor_lang::system_program::{transfer, Transfer};
 use std::mem::size_of;
 
 declare_id!("Br1dgE1111111111111111111111111111111111111");
@@ -95,6 +96,44 @@ pub mod native_bridge {
             amount,
             destination_chain,
             destination_recipient,
+            is_native: false,
+        });
+
+        Ok(())
+    }
+
+    pub fn burn_native(
+        ctx: Context<BurnNative>,
+        release_id: [u8; 32],
+        destination_recipient: [u8; 32],
+        amount: u64,
+        destination_chain: u64
+    ) -> Result<()> {
+        let burn_record = &mut ctx.accounts.burn_record;
+        burn_record.release_id = release_id;
+        burn_record.amount = amount;
+        burn_record.destination_chain = destination_chain;
+        burn_record.destination_recipient = destination_recipient;
+        burn_record.owner = ctx.accounts.owner.key();
+        burn_record.mint = Pubkey::default();
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.owner.to_account_info(),
+            to: ctx.accounts.state.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.system_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        transfer(cpi_ctx, amount)?;
+
+        emit!(WrappedBurned {
+            release_id,
+            burn_record: ctx.accounts.burn_record.key(),
+            owner: ctx.accounts.owner.key(),
+            mint: Pubkey::default(),
+            amount,
+            destination_chain,
+            destination_recipient,
+            is_native: true,
         });
 
         Ok(())
@@ -178,6 +217,18 @@ pub struct BurnWrapped<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+#[instruction(release_id: [u8; 32])]
+pub struct BurnNative<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    #[account(init, payer = owner, space = 8 + size_of::<BurnRecord>(), seeds = [b"burn-record", &release_id], bump)]
+    pub burn_record: Account<'info, BurnRecord>,
+    #[account(mut, seeds = [b"state"], bump)]
+    pub state: Account<'info, BridgeState>,
+    pub system_program: Program<'info, System>,
+}
+
 #[event]
 pub struct WrappedMinted {
     pub transfer_id: [u8; 32],
@@ -197,6 +248,7 @@ pub struct WrappedBurned {
     pub amount: u64,
     pub destination_chain: u64,
     pub destination_recipient: [u8; 32],
+    pub is_native: bool,
 }
 
 #[error_code]

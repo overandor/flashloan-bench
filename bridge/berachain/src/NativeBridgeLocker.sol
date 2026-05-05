@@ -12,8 +12,10 @@ contract NativeBridgeLocker is Ownable {
     using SafeERC20 for IERC20;
 
     bytes32 public constant RELEASE_TYPEHASH = keccak256(
-        "ReleaseRequest(address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId)"
+        "ReleaseRequest(address recipient,bytes32 sourceMint,uint256 amount,bytes32 transferId,uint64 sourceChainId,bool isNative)"
     );
+
+    bytes32 public constant NATIVE_SOL_MINT_ID = keccak256("NATIVE_SOL");
 
     struct DepositIntent {
         address depositor;
@@ -30,6 +32,7 @@ contract NativeBridgeLocker is Ownable {
         uint256 amount;
         bytes32 transferId;
         uint64 sourceChainId;
+        bool isNative;
     }
 
     uint256 public validatorThreshold;
@@ -51,7 +54,11 @@ contract NativeBridgeLocker is Ownable {
         uint64 destinationChainId,
         uint64 nonce
     );
-    event FundsReleased(bytes32 indexed transferId, address indexed recipient, address indexed token, uint256 amount);
+    event FundsReleased(bytes32 indexed transferId, address indexed recipient, address indexed token, uint256 amount, bool isNative);
+
+    receive() external payable {}
+
+    function fundNative() external payable {}
 
     constructor(address[] memory initialValidators, uint256 initialThreshold) Ownable(msg.sender) {
         for (uint256 i = 0; i < initialValidators.length; i++) {
@@ -120,8 +127,6 @@ contract NativeBridgeLocker is Ownable {
     }
 
     function release(ReleaseRequest calldata request, bytes[] calldata signatures) external {
-        address token = berachainTokenBySolanaMint[request.sourceMint];
-        require(token != address(0), "token_mapping_missing");
         require(!releasedTransfers[request.transferId], "transfer_processed");
         require(signatures.length >= validatorThreshold, "insufficient_signatures");
 
@@ -139,8 +144,17 @@ contract NativeBridgeLocker is Ownable {
 
         require(validSignatures >= validatorThreshold, "threshold_not_met");
         releasedTransfers[request.transferId] = true;
-        IERC20(token).safeTransfer(request.recipient, request.amount);
-        emit FundsReleased(request.transferId, request.recipient, token, request.amount);
+
+        if (request.isNative && request.sourceMint == NATIVE_SOL_MINT_ID) {
+            require(address(this).balance >= request.amount, "insufficient_native_balance");
+            payable(request.recipient).transfer(request.amount);
+            emit FundsReleased(request.transferId, request.recipient, address(0), request.amount, true);
+        } else {
+            address token = berachainTokenBySolanaMint[request.sourceMint];
+            require(token != address(0), "token_mapping_missing");
+            IERC20(token).safeTransfer(request.recipient, request.amount);
+            emit FundsReleased(request.transferId, request.recipient, token, request.amount, false);
+        }
     }
 
     function getReleaseDigest(ReleaseRequest calldata request) public view returns (bytes32) {
@@ -156,7 +170,8 @@ contract NativeBridgeLocker is Ownable {
                         request.sourceMint,
                         request.amount,
                         request.transferId,
-                        request.sourceChainId
+                        request.sourceChainId,
+                        request.isNative
                     )
                 )
             )

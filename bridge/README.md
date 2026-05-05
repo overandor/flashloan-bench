@@ -2,20 +2,26 @@
 
 A production-grade native bridge between Berachain and Solana using a custodied lock/mint and burn/release model with validator quorum signatures.
 
+**Supports:**
+- ERC-20 tokens (Berachain) ↔ SPL tokens (Solana)
+- **Native SOL → Native BERA** (new)
+
 ## Architecture
 
 ### Components
 
 1. **Berachain Contract** (`bridge/berachain/src/NativeBridgeLocker.sol`)
    - Locks native ERC-20 tokens for minting wrapped tokens on Solana
-   - Releases native tokens upon receiving validator-signed release requests from Solana burns
+   - Releases native tokens (ERC-20 or native BERA) upon receiving validator-signed release requests from Solana burns
    - Uses OpenZeppelin SafeERC20 and Ownable for security
    - Supports threshold validator signatures (multi-sig)
    - Maps Solana mint addresses to Berachain token addresses
+   - Accepts native BERA deposits via `fundNative()` for native SOL releases
 
 2. **Solana Program** (`bridge/solana/programs/native_bridge/src/lib.rs`)
    - Mints wrapped tokens when receiving lock attestations from Berachain
    - Burns wrapped tokens and emits stable release IDs for Berachain release
+   - **Burns native SOL via `burn_native()` for native BERA releases**
    - Supports threshold validator set (multi-sig)
    - Uses Anchor framework
 
@@ -23,6 +29,7 @@ A production-grade native bridge between Berachain and Solana using a custodied 
    - Watches `DepositLocked` events on Berachain and triggers Solana minting
    - Watches `WrappedBurned` events on Solana and submits release transactions to Berachain
    - Collects validator signatures for threshold quorum
+   - Handles both ERC-20 and native token releases
    - Built with ethers.js and @solana/web3.js
 
 4. **Client SDKs**
@@ -41,12 +48,21 @@ A production-grade native bridge between Berachain and Solana using a custodied 
 
 ### Solana → Berachain (Burn/Release)
 
+#### For ERC-20 / SPL tokens:
 1. User calls `burn_wrapped(releaseId, destinationRecipient, amount, destinationChain)` on Solana
 2. Program burns wrapped tokens and emits `WrappedBurned` event with stable `releaseId`
-3. Relayer observes event and builds `ReleaseRequest`
+3. Relayer observes event and builds `ReleaseRequest` with `isNative: false`
 4. Validators sign the release digest
 5. Relayer submits `release(request, signatures)` on Berachain once threshold is met
-6. Berachain contract releases native tokens to recipient
+6. Berachain contract releases ERC-20 tokens to recipient
+
+#### For Native SOL → Native BERA:
+1. User calls `burn_native(releaseId, destinationRecipient, amount, destinationChain)` on Solana
+2. Program transfers native SOL to bridge state and emits `WrappedBurned` event with `isNative: true`
+3. Relayer observes event and builds `ReleaseRequest` with `isNative: true` and `sourceMint: NATIVE_SOL_MINT_ID`
+4. Validators sign the release digest
+5. Relayer submits `release(request, signatures)` on Berachain once threshold is met
+6. Berachain contract releases native BERA to recipient (must be pre-funded via `fundNative()`)
 
 ## Deployment
 

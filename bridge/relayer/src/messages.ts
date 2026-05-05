@@ -17,7 +17,8 @@ export const burnEventSchema = z.object({
   mint: z.string(),
   amount: z.string(),
   destinationChain: z.number().int().nonnegative(),
-  destinationRecipient: z.string()
+  destinationRecipient: z.string(),
+  isNative: z.boolean()
 });
 
 export const berachainReleaseRequestSchema = z.object({
@@ -25,7 +26,8 @@ export const berachainReleaseRequestSchema = z.object({
   sourceMint: z.string(),
   amount: z.string(),
   transferId: z.string(),
-  sourceChainId: z.number().int().nonnegative()
+  sourceChainId: z.number().int().nonnegative(),
+  isNative: z.boolean()
 });
 
 export type LockEvent = z.infer<typeof lockEventSchema>;
