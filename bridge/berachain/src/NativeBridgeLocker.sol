@@ -36,6 +36,7 @@ contract NativeBridgeLocker is Ownable {
     }
 
     uint256 public validatorThreshold;
+    uint256 public activeValidatorCount;
     mapping(address => bool) public validators;
     mapping(bytes32 => bool) public lockedTransfers;
     mapping(bytes32 => bool) public releasedTransfers;
@@ -65,18 +66,27 @@ contract NativeBridgeLocker is Ownable {
             validators[initialValidators[i]] = true;
             emit ValidatorUpdated(initialValidators[i], true);
         }
-        require(initialThreshold > 0 && initialThreshold <= initialValidators.length, "invalid_threshold");
+        activeValidatorCount = initialValidators.length;
+        require(initialThreshold > 0 && initialThreshold <= activeValidatorCount, "invalid_threshold");
         validatorThreshold = initialThreshold;
         emit ValidatorThresholdUpdated(initialThreshold);
     }
 
     function setValidator(address validator, bool active) external onlyOwner {
+        require(validators[validator] != active, "no_change");
         validators[validator] = active;
+        if (active) {
+            activeValidatorCount++;
+        } else {
+            activeValidatorCount--;
+        }
+        require(validatorThreshold <= activeValidatorCount, "threshold_exceeds_validators");
         emit ValidatorUpdated(validator, active);
     }
 
     function setValidatorThreshold(uint256 threshold) external onlyOwner {
         require(threshold > 0, "threshold_zero");
+        require(threshold <= activeValidatorCount, "threshold_exceeds_validators");
         validatorThreshold = threshold;
         emit ValidatorThresholdUpdated(threshold);
     }
@@ -147,7 +157,8 @@ contract NativeBridgeLocker is Ownable {
 
         if (request.isNative && request.sourceMint == NATIVE_SOL_MINT_ID) {
             require(address(this).balance >= request.amount, "insufficient_native_balance");
-            payable(request.recipient).transfer(request.amount);
+            (bool ok, ) = payable(request.recipient).call{value: request.amount}("");
+            require(ok, "native_transfer_failed");
             emit FundsReleased(request.transferId, request.recipient, address(0), request.amount, true);
         } else {
             address token = berachainTokenBySolanaMint[request.sourceMint];

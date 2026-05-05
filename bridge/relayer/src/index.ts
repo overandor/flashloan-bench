@@ -59,6 +59,7 @@ async function main() {
 
   const validatorAddresses = config.VALIDATOR_ADDRESSES.split(',').map((a: string) => a.trim());
   const validatorThreshold = config.VALIDATOR_THRESHOLD;
+  const dryRun = config.DRY_RUN || false;
 
   console.log(
     JSON.stringify(
@@ -118,28 +119,54 @@ async function main() {
       if (log.includes(SOLANA_WRAPPED_BURNED_EVENT)) {
         console.log(JSON.stringify({ action: 'observed_solana_burn', signature: logInfo.signature, logs }, null, 2));
 
-        const isNative = log.includes('is_native: true') || !log.includes('mint:');
-        const mint = isNative ? '0x' + '00'.repeat(32) : '0x' + '22'.repeat(32);
+        let releaseRequest: ReturnType<typeof buildBerachainReleaseRequest>;
 
-        const burnEvent = burnEventSchema.parse({
-          releaseId: '0x' + Buffer.from(logInfo.signature).toString('hex').padEnd(64, '0').slice(0, 66),
-          burnRecord: logInfo.signature,
-          owner: logInfo.signature,
-          mint: mint,
-          amount: '1000000',
-          destinationChain: 80094,
-          destinationRecipient: wallet.address,
-          isNative: isNative
-        });
+        try {
+          const tx = await solanaConnection.getTransaction(logInfo.signature, { maxSupportedTransactionVersion: 0 });
+          if (!tx) {
+            throw new Error('Transaction not found');
+          }
 
-        const releaseRequest = buildBerachainReleaseRequest({
-          releaseId: burnEvent.releaseId,
-          destinationRecipient: burnEvent.destinationRecipient,
-          mint: burnEvent.isNative ? nativeSolMintId : burnEvent.mint,
-          amount: burnEvent.amount,
-          sourceChainId: 1399811149,
-          isNative: burnEvent.isNative
-        });
+          const logMessage = logs.join(' ');
+          const isNativeMatch = logMessage.match(/is_native:\s*(true|false)/);
+          const amountMatch = logMessage.match(/amount:\s*(\d+)/);
+          const releaseIdMatch = logMessage.match(/release_id:\s*([a-fA-F0-9]+)/);
+          const destinationChainMatch = logMessage.match(/destination_chain:\s*(\d+)/);
+          const destinationRecipientMatch = logMessage.match(/destination_recipient:\s*([a-fA-F0-9]+)/);
+
+          if (!isNativeMatch || !amountMatch || !releaseIdMatch || !destinationChainMatch || !destinationRecipientMatch) {
+            throw new Error('Failed to parse burn event fields from logs');
+          }
+
+          const isNative = isNativeMatch[1] === 'true';
+          const amount = amountMatch[1];
+          const releaseId = '0x' + releaseIdMatch[1];
+          const destinationChain = parseInt(destinationChainMatch[1]);
+          const destinationRecipient = '0x' + destinationRecipientMatch[1];
+
+          const burnEvent = burnEventSchema.parse({
+            releaseId,
+            burnRecord: logInfo.signature,
+            owner: tx.transaction.message.staticAccountKeys[0]?.toString() || '',
+            mint: isNative ? nativeSolMintId : '0x' + '00'.repeat(32),
+            amount,
+            destinationChain,
+            destinationRecipient,
+            isNative
+          });
+
+          releaseRequest = buildBerachainReleaseRequest({
+            releaseId: burnEvent.releaseId,
+            destinationRecipient: burnEvent.destinationRecipient,
+            mint: burnEvent.isNative ? nativeSolMintId : burnEvent.mint,
+            amount: burnEvent.amount,
+            sourceChainId: 1399811149,
+            isNative: burnEvent.isNative
+          });
+        } catch (error) {
+          console.error(JSON.stringify({ action: 'burn_event_parse_failed', error: (error as Error).message }, null, 2));
+          throw new Error('Unable to decode Solana burn event; refusing to build release request');
+        }
 
         const signatures: string[] = [];
         for (const validatorAddr of validatorAddresses) {
@@ -154,13 +181,28 @@ async function main() {
         }
 
         if (signatures.length >= validatorThreshold) {
-          try {
-            const tx = await lockerContract.release(releaseRequest, signatures);
-            console.log(JSON.stringify({ action: 'berachain_release_submitted', txHash: tx.hash }, null, 2));
-            const receipt = await tx.wait();
-            console.log(JSON.stringify({ action: 'berachain_release_confirmed', receipt }, null, 2));
-          } catch (error) {
-            console.error(JSON.stringify({ action: 'berachain_release_failed', error }, null, 2));
+          if (dryRun) {
+            console.log(
+              JSON.stringify(
+                {
+                  action: 'dry_run_release_request',
+                  releaseRequest,
+                  signatures,
+                  note: 'DRY RUN: Transaction not submitted'
+                },
+                null,
+                2
+              )
+            );
+          } else {
+            try {
+              const tx = await lockerContract.release(releaseRequest, signatures);
+              console.log(JSON.stringify({ action: 'berachain_release_submitted', txHash: tx.hash }, null, 2));
+              const receipt = await tx.wait();
+              console.log(JSON.stringify({ action: 'berachain_release_confirmed', receipt }, null, 2));
+            } catch (error) {
+              console.error(JSON.stringify({ action: 'berachain_release_failed', error }, null, 2));
+            }
           }
         } else {
           console.log(
