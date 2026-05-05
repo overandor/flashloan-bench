@@ -1,0 +1,38 @@
+[
+  {
+    "full_name": "ccyanxyz/uniswap-arbitrage-analysis",
+    "clone_url": "https://github.com/ccyanxyz/uniswap-arbitrage-analysis.git",
+    "html_url": "https://github.com/ccyanxyz/uniswap-arbitrage-analysis",
+    "description": "Uniswap arbitrage problem analysis",
+    "stars": 2116,
+    "pushed_at": "2025-12-11T18:40:49Z",
+    "language": "Python"
+  },
+  {
+    "full_name": "pedrobergamini/flashloaner-contract",
+    "clone_url": "https://github.com/pedrobergamini/flashloaner-contract.git",
+    "html_url": "https://github.com/pedrobergamini/flashloaner-contract",
+    "description": "This repo introduces a simple example of how to arbitrage trade on-chain using flash loans.",
+    "stars": 544,
+    "pushed_at": "2025-12-04T16:28:53Z",
+    "language": "Solidity"
+  },
+  {
+    "full_name": "Devilla/eth-arbitrage",
+    "clone_url": "https://github.com/Devilla/eth-arbitrage.git",
+    "html_url": "https://github.com/Devilla/eth-arbitrage",
+    "description": "A DeFi Arbitrage Bot with DyDx Flashloans.",
+    "stars": 410,
+    "pushed_at": "2026-03-16T18:28:02Z",
+    "language": "Solidity"
+  },
+  {
+    "full_name": "hanshaze/solana-sniper-copy-mev-trading-bot",
+    "clone_url": "https://github.com/hanshaze/solana-sniper-copy-mev-trading-bot.git",
+    "html_url": "https://github.com/hanshaze/solana-sniper-copy-mev-trading-bot",
+    "description": "\ud83d\udc8a Solana Raydium/Pump dex sniper copy trading MEV sandwich arbitrage volume, shred market maker flashloan strategies. Profitable Solana auto trading bot for pump.fun, bonk.fun, letsbonk. Uses gRPC, shredstream, frontruning, copy trading copy trading copy Rust 0slot/0block copy sniper copy sniper copy trading copy copy trading copy best open sourc",
+    "stars": 150,
+    "pushed_at": "2026-05-03T18:38:24Z",
+    "language": null
+  }
+]

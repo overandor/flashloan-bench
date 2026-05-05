@@ -1,0 +1,20 @@
+[
+  {
+    "full_name": "ccyanxyz/uniswap-arbitrage-analysis",
+    "html_url": "https://github.com/ccyanxyz/uniswap-arbitrage-analysis",
+    "description": "Uniswap arbitrage problem analysis",
+    "stargazers_count": 2115,
+    "pushed_at": "2025-12-11T18:40:49Z",
+    "default_branch": "master",
+    "language": "Python"
+  },
+  {
+    "full_name": "Devilla/eth-arbitrage",
+    "html_url": "https://github.com/Devilla/eth-arbitrage",
+    "description": "A DeFi Arbitrage Bot with DyDx Flashloans.",
+    "stargazers_count": 410,
+    "pushed_at": "2026-03-16T18:28:02Z",
+    "default_branch": "main",
+    "language": "Solidity"
+  }
+]

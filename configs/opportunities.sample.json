@@ -1,0 +1,50 @@
+[
+  {
+    "route": "AaveV3 -> UniswapV3 -> Curve -> repay",
+    "edge_bps": 38.0,
+    "slippage_bps": 9.0,
+    "gas_units": 780000,
+    "success_prob": 0.71,
+    "max_notional_usd": 650000.0
+  },
+  {
+    "route": "AaveV3 -> Balancer -> UniswapV3 -> repay",
+    "edge_bps": 26.0,
+    "slippage_bps": 7.0,
+    "gas_units": 690000,
+    "success_prob": 0.78,
+    "max_notional_usd": 450000.0
+  },
+  {
+    "route": "AaveV3 -> Curve TriPool -> Sushi -> repay",
+    "edge_bps": 21.0,
+    "slippage_bps": 6.5,
+    "gas_units": 620000,
+    "success_prob": 0.82,
+    "max_notional_usd": 380000.0
+  },
+  {
+    "route": "AaveV3 -> UniswapV3 single hop -> repay",
+    "edge_bps": 14.0,
+    "slippage_bps": 4.0,
+    "gas_units": 480000,
+    "success_prob": 0.89,
+    "max_notional_usd": 250000.0
+  },
+  {
+    "route": "AaveV3 -> Curve -> Balancer -> repay",
+    "edge_bps": 33.0,
+    "slippage_bps": 12.5,
+    "gas_units": 810000,
+    "success_prob": 0.65,
+    "max_notional_usd": 700000.0
+  },
+  {
+    "route": "AaveV3 -> DODO -> UniswapV3 -> repay",
+    "edge_bps": 29.0,
+    "slippage_bps": 8.0,
+    "gas_units": 735000,
+    "success_prob": 0.75,
+    "max_notional_usd": 520000.0
+  }
+]

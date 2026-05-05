@@ -1,0 +1,62 @@
+{
+  "inputs": {
+    "principal_usd": 250000.0,
+    "flash_loan_fee_bps": 9.0,
+    "gas_price_gwei": 16.0,
+    "eth_usd": 3200.0,
+    "iterations": 2000000,
+    "opportunities_file": "configs/opportunities.sample.json",
+    "opportunities_count": 6
+  },
+  "top_routes": [
+    {
+      "route": "AaveV3 -> UniswapV3 -> Curve -> repay",
+      "notional_usd": 250000.0,
+      "net_profit_usd": 460.06399999999996,
+      "expected_value_usd": 326.64543999999995,
+      "success_prob": 0.71
+    },
+    {
+      "route": "AaveV3 -> DODO -> UniswapV3 -> repay",
+      "notional_usd": 250000.0,
+      "net_profit_usd": 262.368,
+      "expected_value_usd": 196.776,
+      "success_prob": 0.75
+    },
+    {
+      "route": "AaveV3 -> Balancer -> UniswapV3 -> repay",
+      "notional_usd": 250000.0,
+      "net_profit_usd": 214.672,
+      "expected_value_usd": 167.44416,
+      "success_prob": 0.78
+    },
+    {
+      "route": "AaveV3 -> Curve -> Balancer -> repay",
+      "notional_usd": 250000.0,
+      "net_profit_usd": 246.028,
+      "expected_value_usd": 159.9182,
+      "success_prob": 0.65
+    },
+    {
+      "route": "AaveV3 -> Curve TriPool -> Sushi -> repay",
+      "notional_usd": 250000.0,
+      "net_profit_usd": 105.756,
+      "expected_value_usd": 86.71992,
+      "success_prob": 0.82
+    },
+    {
+      "route": "AaveV3 -> UniswapV3 single hop -> repay",
+      "notional_usd": 250000.0,
+      "net_profit_usd": 0.4239999999999995,
+      "expected_value_usd": 0.37735999999999953,
+      "success_prob": 0.89
+    }
+  ],
+  "throughput": {
+    "iterations": 2000000,
+    "seconds": 0.5126583750825375,
+    "evals_per_sec": 3901233.4474746496,
+    "ev_mean_usd": 156.31360406462,
+    "ev_p95_usd": 326.64543999999995
+  }
+}

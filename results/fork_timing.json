@@ -1,0 +1,15 @@
+{
+  "iterations_per_test": 300,
+  "eth_blockNumber_ms": {
+    "p50": 0.311,
+    "p95": 0.499,
+    "p99": 0.892,
+    "avg": 0.362
+  },
+  "eth_call_weth_totalSupply_ms": {
+    "p50": 0.452,
+    "p95": 0.738,
+    "p99": 0.92,
+    "avg": 1.369
+  }
+}

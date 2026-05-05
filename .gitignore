@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+out/
+dist/
+build/
+target/
+.next/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Foundry
+lib/
+cache/
+
+# Solana
+.anchor/
+
+# Bridge data
+.data/

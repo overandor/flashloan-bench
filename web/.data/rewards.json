@@ -1,0 +1,11 @@
+{
+  "7fe55a21-7a06-46da-8e08-f0c7fb21d370": {
+    "rewardId": "7fe55a21-7a06-46da-8e08-f0c7fb21d370",
+    "customerEmail": "subscriber@example.com",
+    "plan": "pro",
+    "rewardType": "strategy_pack",
+    "rewardValue": "Premium strategy template pack + 2,000 API credits",
+    "message": "Pro subscribers receive premium strategy templates plus 2,000 bonus API credits.",
+    "createdAt": "2026-05-05T00:35:27.102Z"
+  }
+}

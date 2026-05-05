@@ -1,0 +1,66 @@
+[
+  {
+    "repo": "ccyanxyz__uniswap-arbitrage-analysis",
+    "full_name": "ccyanxyz/uniswap-arbitrage-analysis",
+    "url": "https://github.com/ccyanxyz/uniswap-arbitrage-analysis",
+    "stars": 2116,
+    "pushed_at": "2025-12-11T18:40:49Z",
+    "framework": "unknown",
+    "clone_status": "Success",
+    "build_status": "Skipped",
+    "build_message": "Unsupported framework (not Foundry/Hardhat)",
+    "test_status": "Skipped",
+    "test_type": "N/A",
+    "runtime_errors": "N/A",
+    "red_flags": []
+  },
+  {
+    "repo": "pedrobergamini__flashloaner-contract",
+    "full_name": "pedrobergamini/flashloaner-contract",
+    "url": "https://github.com/pedrobergamini/flashloaner-contract",
+    "stars": 544,
+    "pushed_at": "2025-12-04T16:28:53Z",
+    "framework": "foundry",
+    "clone_status": "Success",
+    "build_status": "Failed",
+    "build_message": "Command not found: forge ([Errno 2] No such file or directory: 'forge')",
+    "test_status": "Skipped",
+    "test_type": "N/A",
+    "runtime_errors": "N/A",
+    "red_flags": [
+      "Broadcast-related code path in README.md",
+      "Broadcast-related code path in script/DeployFlashLoaner.s.sol",
+      "Broadcast-related code path in script/SimulateFlashSwap.s.sol"
+    ]
+  },
+  {
+    "repo": "Devilla__eth-arbitrage",
+    "full_name": "Devilla/eth-arbitrage",
+    "url": "https://github.com/Devilla/eth-arbitrage",
+    "stars": 410,
+    "pushed_at": "2026-03-16T18:28:02Z",
+    "framework": "hardhat",
+    "clone_status": "Success",
+    "build_status": "Success",
+    "build_message": "npm install + hardhat compile passed",
+    "test_status": "Success",
+    "test_type": "Hardhat test (local hardhat network)",
+    "runtime_errors": "\n\n\n\n  Lock\n    Deployment\n      \u2714 Should set the right unlockTime (777ms)\n      \u2714 Should set the right owner\n      \u2714 Should receive and store the funds to lock\n      \u2714 Should fail if the unlockTime is not in the future\n    Withdrawals\n      Validations\n        \u2714 Should revert with the right error if called too soon\n        \u2714 Should revert with the right error if called from another account\n        \u2714 Shouldn't fail if the unlockTime has arrived and the owner calls it\n      Events\n        \u2714 Should emit an event on withdrawals\n      Transfers\n        \u2714 Should transfer the funds to the owner\n\n\n  9 passing (971ms)\n\n\nWARNING: You are using a version of Node.js that is not supported, and it may work incorrectly, or not work at all. See https://hardhat.org/nodejs-versions\n",
+    "red_flags": []
+  },
+  {
+    "repo": "hanshaze__solana-sniper-copy-mev-trading-bot",
+    "full_name": "hanshaze/solana-sniper-copy-mev-trading-bot",
+    "url": "https://github.com/hanshaze/solana-sniper-copy-mev-trading-bot",
+    "stars": 150,
+    "pushed_at": "2026-05-03T18:38:24Z",
+    "framework": "unknown",
+    "clone_status": "Success",
+    "build_status": "Skipped",
+    "build_message": "Unsupported framework (not Foundry/Hardhat)",
+    "test_status": "Skipped",
+    "test_type": "N/A",
+    "runtime_errors": "N/A",
+    "red_flags": []
+  }
+]
