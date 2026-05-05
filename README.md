@@ -1,5 +1,9 @@
 # Flash-Loan Benchmark & Berachain-Solana Native Bridge
 
+[![Bridge CI](https://github.com/overandor/flashloan-bench/actions/workflows/bridge-ci.yml/badge.svg)](https://github.com/overandor/flashloan-bench/actions/workflows/bridge-ci.yml)
+[![Python Bench CI](https://github.com/overandor/flashloan-bench/actions/workflows/python-bench-ci.yml/badge.svg)](https://github.com/overandor/flashloan-bench/actions/workflows/python-bench-ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This repository contains two main components:
 
 1. **Berachain-Solana Native Bridge** - A production-grade native bridge between Berachain and Solana using lock/mint and burn/release with validator quorum signatures
@@ -19,7 +23,8 @@ This repository contains two main components:
 - [Security Model](docs/SECURITY_MODEL.md) - Trust assumptions and security properties
 - [Threat Model](docs/THREAT_MODEL.md) - Attack vectors and mitigations
 - [Testnet Deployment Guide](docs/TESTNET_DEMO.md) - How to deploy to testnet
-- [Benchmark Dashboard](docs/BENCHMARK_DASHBOARD.md) - Metrics and visualization plan
+- [Benchmark Dashboard](dashboard/) - Real-time status dashboard (Streamlit)
+- [Benchmark Dashboard Plan](docs/BENCHMARK_DASHBOARD.md) - Metrics and visualization plan
 
 **⚠️ Security Note:** The bridge is currently in prototype phase. Do not use with real value until tests pass and audit is complete.
 
@@ -67,3 +72,52 @@ Result files:
 
 - For realistic production forecasting, replace `MAINNET_RPC_URL` with your paid low-latency RPC provider.
 - If you need deterministic replay, set `FORK_BLOCK_NUMBER` in `configs/mainnet_fork.env`.
+
+## How to Verify This Release
+
+### Verify the Code
+```bash
+# Clone the repository
+git clone https://github.com/overandor/flashloan-bench.git
+cd flashloan-bench
+
+# Checkout the release tag
+git checkout v0.1.0-prototype
+
+# Verify the commit hash matches the release
+git log -1
+```
+
+### Verify the Build
+```bash
+# Build Berachain contracts
+cd bridge/berachain
+npm install
+npm run compile
+
+# Build Solana program
+cd ../solana
+anchor build
+
+# Build TypeScript relayer
+cd ../relayer
+npm install
+npm run build
+```
+
+### Verify the Release on GitHub
+- Visit the [release page](https://github.com/overandor/flashloan-bench/releases/tag/v0.1.0-prototype)
+- Verify the tag points to commit `3177e56`
+- Verify it's marked as a prerelease
+- Review the release notes
+
+### Run the Dashboard
+```bash
+cd dashboard
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+### Check CI Status
+- [Bridge CI](https://github.com/overandor/flashloan-bench/actions/workflows/bridge-ci.yml)
+- [Python Bench CI](https://github.com/overandor/flashloan-bench/actions/workflows/python-bench-ci.yml)
