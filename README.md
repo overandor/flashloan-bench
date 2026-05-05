@@ -1,8 +1,27 @@
-# Flash-Loan Compute Benchmark Kit
+# Flash-Loan Benchmark & Berachain-Solana Native Bridge
+
+This repository contains two main components:
+
+1. **Berachain-Solana Native Bridge** - A production-grade native bridge between Berachain and Solana using lock/mint and burn/release with validator quorum signatures
+2. **Flash-Loan Compute Benchmark Kit** - Local toolkit to profile flash-loan strategy compute and run mainnet-fork timing tests
+
+## Berachain-Solana Bridge
+
+**Status:** Prototype under active hardening. Not yet production-safe.
+
+**Supports:**
+- ERC-20 tokens (Berachain) ↔ SPL tokens (Solana)
+- Native SOL → Native BERA
+
+**Documentation:** See [bridge/README.md](bridge/README.md) for architecture, deployment, and usage.
+
+**⚠️ Security Note:** The bridge is currently in prototype phase. Critical hardening (tests, CI, real event decoding) is in progress on the `harden-bridge-ci` branch. Do not use with real value until tests pass and audit is complete.
+
+## Flash-Loan Benchmark Kit
 
 Local toolkit to profile flash-loan strategy compute and run mainnet-fork timing tests with Foundry/Anvil.
 
-## What It Includes
+### What It Includes
 
 - `bench/harness.py`: profit + gas + slippage + execution-probability scoring.
 - `scripts/run_benchmark.sh`: repeatable throughput benchmark run.
@@ -11,7 +30,7 @@ Local toolkit to profile flash-loan strategy compute and run mainnet-fork timing
 - `configs/mainnet_fork.env.example`: fork config template.
 - `results/*.json`: generated benchmark artifacts.
 
-## Quick Start
+### Quick Start
 
 ```bash
 cd /Users/alep/Documents/flashloan-bench
@@ -26,7 +45,7 @@ cd /Users/alep/Documents/flashloan-bench
 MAINNET_RPC_URL=https://ethereum.publicnode.com ./scripts/run_fork_timing.sh
 ```
 
-## Current Results (This Machine)
+### Current Results (This Machine)
 
 - Strategy-evaluation throughput: `~2.89M evals/sec` (Python harness)
 - Anvil fork timing (`ethereum.publicnode.com`, 300 samples each):
@@ -38,7 +57,7 @@ Result files:
 - `results/benchmark.json`
 - `results/fork_timing.json`
 
-## Notes
+### Notes
 
 - For realistic production forecasting, replace `MAINNET_RPC_URL` with your paid low-latency RPC provider.
 - If you need deterministic replay, set `FORK_BLOCK_NUMBER` in `configs/mainnet_fork.env`.

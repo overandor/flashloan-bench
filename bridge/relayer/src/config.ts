@@ -7,7 +7,8 @@ const configSchema = z.object({
   SOLANA_RPC_URL: z.string().url(),
   SOLANA_BRIDGE_PROGRAM_ID: z.string().min(1),
   VALIDATOR_ADDRESSES: z.string().min(1),
-  VALIDATOR_THRESHOLD: z.string().transform(Number)
+  VALIDATOR_THRESHOLD: z.string().transform(Number),
+  DRY_RUN: z.string().optional().transform((val: string | undefined) => val === 'true')
 });
 
 export type RelayerConfig = z.infer<typeof configSchema>;
